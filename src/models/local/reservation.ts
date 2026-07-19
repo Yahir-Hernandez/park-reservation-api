@@ -1,64 +1,57 @@
 import { Reservation, ReserFilter } from '../../types/reservation';
 import { readReservationJson, writeReservationJson } from '../../utils/jsonStorage';
+import { ErrorService } from '../../types/errors';
 
 export class ModelReservation {
 
-  async getAll(): Promise<Reservation[]> {
-    return await readReservationJson();
-  }
+  // Helper privado para centralizar la lógica de filtrado y no repetir código
+  private static matchesFilter(reserv: Reservation, filter: ReserFilter): boolean {
+    const activeFilterKeys = Object.keys(filter).filter(
+      key => filter[key as keyof ReserFilter] !== undefined
+    ) as (keyof ReserFilter)[];
 
-  async getBy(filter: ReserFilter): Promise<Reservation[]> {
-    const reservs = await readReservationJson();
-    return reservs.filter((reserv) => {
-      const activeFilterKeys = Object.keys(filter).filter(
-        key => filter[key as keyof ReserFilter] !== undefined
-      );
+    return activeFilterKeys.every((key) => {
+      const reservValue = reserv[key as keyof Reservation];
+      const filterValue = filter[key];
 
-      return activeFilterKeys.every((key) => {
-        const reservValue = reserv[key as keyof Reservation];
-        const filterValue = filter[key as keyof ReserFilter];
+      if (Array.isArray(reservValue) && Array.isArray(filterValue)) {
+        return filterValue.every(item => reservValue.includes(item));
+      }
 
-        if (Array.isArray(reservValue) && Array.isArray(filterValue)) {
-          return filterValue.every(item => reservValue.includes(item));
-        }
+      if (typeof reservValue === 'string' && typeof filterValue === 'string') {
+        return reservValue.toLowerCase().includes(filterValue.toLowerCase());
+      }
 
-        if (typeof reservValue === 'string' && typeof filterValue === 'string') {
-          return reservValue.toLowerCase().includes(filterValue.toLowerCase());
-        }
-
-        return reservValue === filterValue;
-      });
+      return reservValue === filterValue;
     });
   }
 
-  static async add(reserv: Reservation): Promise<void> {
-    const reservations = await readReservationJson();
-    reservations.push(reserv);
-    await writeReservationJson(reservations);
+  async getAll(): Promise<Reservation[] | ErrorService> {
+    return await readReservationJson();
   }
 
-  static async deleteBy(filter: ReserFilter): Promise<void> {
-    const activeFilterKeys = Object.keys(filter).filter(
-      key => filter[key as keyof ReserFilter] !== undefined
+  async getBy(filter: ReserFilter): Promise<Reservation[] | ErrorService> {
+    const read = await readReservationJson();
+    if (read && 'textCode' in read) return read;
+
+    return read.filter(reserv => ModelReservation.matchesFilter(reserv, filter));
+  }
+
+  static async add(reserv: Reservation): Promise<Reservation[] | ErrorService> {
+    const read = await readReservationJson();
+    if (read && 'textCode' in read) return read;
+
+    read.push(reserv);
+    return await writeReservationJson(read);
+  }
+
+  static async deleteBy(filter: ReserFilter): Promise<Reservation[] | ErrorService> {
+    const read = await readReservationJson();
+    if (read && 'textCode' in read) return read;
+    const updatedReservations = read.filter(
+      reserv => !ModelReservation.matchesFilter(reserv, filter)
     );
 
-    await writeReservationJson(
-      (await readReservationJson()).filter((reserv) => {
-        return !activeFilterKeys.every((key) => {
-          const reservValue = reserv[key as keyof Reservation];
-          const filterValue = filter[key as keyof ReserFilter];
-
-          if (Array.isArray(reservValue) && Array.isArray(filterValue)) {
-            return filterValue.every(item => reservValue.includes(item));
-          }
-
-          if (typeof reservValue === 'string' && typeof filterValue === 'string') {
-            return reservValue.toLowerCase().includes(filterValue.toLowerCase());
-          }
-
-          return reservValue === filterValue;
-        });
-      })
-    );
+    return await writeReservationJson(updatedReservations);
   }
 }

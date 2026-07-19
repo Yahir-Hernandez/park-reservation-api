@@ -1,72 +1,60 @@
 import { Park, ParkFilter } from '../../types/park';
 import { readParksJson, writeParksJson } from '../../utils/jsonStorage';
-
+import { ErrorService } from '../../types/errors';
 
 export class ModelPark {
 
-  static async getAll(): Promise<Park[]> {
-    return readParksJson();
-  }
+  private static matchesFilter(park: Park, filter: ParkFilter): boolean {
+    const activeFilterKeys = Object.keys(filter).filter(
+      key => filter[key as keyof ParkFilter] !== undefined
+    ) as (keyof ParkFilter)[];
 
-  static async getBy(filter: ParkFilter): Promise<Park[]> {
-    const parks = await readParksJson()
-    return parks.filter((p) => {
-      // Obtenemos solo las llaves del filtro que realmente tienen un valor asignado
-      const activeFilterKeys = Object.keys(filter).filter(
-        key => filter[key as keyof ParkFilter] !== undefined
-      );
+    return activeFilterKeys.every((key) => {
+      const parkValue = park[key as keyof Park];
+      const filterValue = filter[key];
 
-      return activeFilterKeys.every((key) => {
-        const parkValue = p[key as keyof Park];
-        const filterValue = filter[key as keyof ParkFilter];
-
-        if (Array.isArray(parkValue) && Array.isArray(filterValue)) {
-          if (key === 'close_days') {
-            return filterValue.some(item => parkValue.includes(item));
-          }
-          return filterValue.every(item => parkValue.includes(item));
+      if (Array.isArray(parkValue) && Array.isArray(filterValue)) {
+        // Regla especial para los días de cierre
+        if (key === 'close_days') {
+          return filterValue.some(item => parkValue.includes(item));
         }
-        if (typeof parkValue === 'string' && typeof filterValue === 'string') {
-          return parkValue.toLowerCase().includes(filterValue.toLowerCase());
-        }
-        return parkValue === filterValue;
-      });
+        return filterValue.every(item => parkValue.includes(item));
+      }
+
+      if (typeof parkValue === 'string' && typeof filterValue === 'string') {
+        return parkValue.toLowerCase().includes(filterValue.toLowerCase());
+      }
+
+      return parkValue === filterValue;
     });
   }
 
-  static async add(park: Park): Promise<void> {
-    const parks = await readParksJson();
-    parks.push(park);
-    await writeParksJson(parks);
+  static async getAll(): Promise<Park[] | ErrorService> {
+    return await readParksJson();
   }
 
-  static async deleteBy(filter: ParkFilter): Promise<void> {
-    const activeFilterKeys = Object.keys(filter).filter(
-      key => filter[key as keyof ParkFilter] !== undefined
-    );
+  static async getBy(filter: ParkFilter): Promise<Park[] | ErrorService> {
+    const read = await readParksJson();
+    if (read && 'textCode' in read) return read;
 
-    await writeParksJson(
-      (await readParksJson()).filter((p) => {
-        // Conservamos el parque si NO cumple con TODO el filtro de eliminación
-        return !activeFilterKeys.every((key) => {
-          const parkValue = p[key as keyof Park];
-          const filterValue = filter[key as keyof ParkFilter];
+    return read.filter(park => ModelPark.matchesFilter(park, filter));
+  }
 
-          if (Array.isArray(parkValue) && Array.isArray(filterValue)) {
-            if (key === 'close_days') {
-              return filterValue.some(item => parkValue.includes(item));
-            }
-            return filterValue.every(item => parkValue.includes(item));
-          }
+  static async add(park: Park): Promise<Park[] | ErrorService> {
+    const read = await readParksJson();
+    if (read && 'textCode' in read) return read;
 
-          if (typeof parkValue === 'string' && typeof filterValue === 'string') {
-            return parkValue.toLowerCase().includes(filterValue.toLowerCase());
-          }
+    read.push(park);
+    return await writeParksJson(read);
+  }
 
-          return parkValue === filterValue;
-        });
-      })
-    );
+  static async deleteBy(filter: ParkFilter): Promise<Park[] | ErrorService> {
+    const read = await readParksJson();
+    if (read && 'textCode' in read) return read;
+
+    
+    const updatedParks = read.filter(park => !ModelPark.matchesFilter(park, filter));
+
+    return await writeParksJson(updatedParks);
   }
 }
-

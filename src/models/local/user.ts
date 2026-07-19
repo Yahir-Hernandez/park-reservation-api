@@ -1,64 +1,55 @@
 import { User, UserFilter } from '../../types/user';
 import { readUsersJson, writeUsersJson } from '../../utils/jsonStorage';
+import { ErrorService } from '../../types/errors';
 
-export class UserModel {
+export class ModelUser {
 
-  static async getAll(): Promise<User[]> {
-    return readUsersJson();
-  }
+  private static matchesFilter(user: User, filter: UserFilter): boolean {
+    const activeFilterKeys = Object.keys(filter).filter(
+      key => filter[key as keyof UserFilter] !== undefined
+    ) as (keyof UserFilter)[];
 
-  static async getBy(filter: UserFilter): Promise<User[]> {
-    const users = await readUsersJson();
-    return users.filter((user) => {
-      const activeFilterKeys = Object.keys(filter).filter(
-        key => filter[key as keyof UserFilter] !== undefined
-      );
+    return activeFilterKeys.every((key) => {
+      const userValue = user[key as keyof User];
+      const filterValue = filter[key];
 
-      return activeFilterKeys.every((key) => {
-        const userValue = user[key as keyof User];
-        const filterValue = filter[key as keyof UserFilter];
+      if (Array.isArray(userValue) && Array.isArray(filterValue)) {
+        return filterValue.every(item => userValue.includes(item));
+      }
 
-        if (Array.isArray(userValue) && Array.isArray(filterValue)) {
-          return filterValue.every(item => userValue.includes(item));
-        }
+      if (typeof userValue === 'string' && typeof filterValue === 'string') {
+        return userValue.toLowerCase().includes(filterValue.toLowerCase());
+      }
 
-        if (typeof userValue === 'string' && typeof filterValue === 'string') {
-          return userValue.toLowerCase().includes(filterValue.toLowerCase());
-        }
-
-        return userValue === filterValue;
-      });
+      return userValue === filterValue;
     });
   }
 
-  static async add(user: User): Promise<void> {
-    const users = await readUsersJson();
-    users.push(user);
-    await writeUsersJson(users);
+  static async getAll(): Promise<User[] | ErrorService> {
+    return await readUsersJson();
   }
 
-  static async deleteBy(filter: UserFilter): Promise<void> {
-    const activeFilterKeys = Object.keys(filter).filter(
-      key => filter[key as keyof UserFilter] !== undefined
-    );
+  static async getBy(filter: UserFilter): Promise<User[] | ErrorService> {
+    const read = await readUsersJson();
+    if (read && 'textCode' in read) return read;
 
-    await writeUsersJson(
-      (await readUsersJson()).filter((user) => {  
-        return !activeFilterKeys.every((key) => {
-          const userValue = user[key as keyof User];
-          const filterValue = filter[key as keyof UserFilter];
+    return read.filter(user => ModelUser.matchesFilter(user, filter));
+  }
 
-          if (Array.isArray(userValue) && Array.isArray(filterValue)) {
-            return filterValue.every(item => userValue.includes(item));
-          }
+  static async create(user: User): Promise<User[] | ErrorService> {
+    const read = await readUsersJson();
+    if (read && 'textCode' in read) return read;
 
-          if (typeof userValue === 'string' && typeof filterValue === 'string') {
-            return userValue.toLowerCase().includes(filterValue.toLowerCase());
-          }
+    read.push(user);
+    return await writeUsersJson(read);
+  }
 
-          return userValue === filterValue;
-        });
-      })
-    );
+  static async deleteBy(filter: UserFilter): Promise<User[] | ErrorService> {
+    const read = await readUsersJson();
+    if (read && 'textCode' in read) return read;
+
+    const updatedUsers = read.filter(user => !ModelUser.matchesFilter(user, filter));
+
+    return await writeUsersJson(updatedUsers);
   }
 }
