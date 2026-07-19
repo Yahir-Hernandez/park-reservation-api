@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "parkId": 1,
+    "startDate": "2026-07-10",
+    "endDate": "2026-07-12",
+    "numPeople": 4,
+    "visitType": "cabaña",
+    "status": "activa",
+    "createdAt": "2026-07-18T10:05:00.000Z"
+  }
+]

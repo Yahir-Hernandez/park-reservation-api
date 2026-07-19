@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "name": "Ana",
+    "lastname": "García López",
+    "username": "ana_garcia",
+    "email": "ana.garcia@example.com",
+    "password": "$2b$10$examplehashvaluegoeshere",
+    "role": "cliente",
+    "created_at": "2026-07-18T10:00:00.000Z"
+  }
+]

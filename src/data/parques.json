@@ -1,0 +1,33 @@
+[
+  {
+    "id": 1,
+    "name": "Parque Nacional Los Ciervos",
+    "location": "Camino Rural km 12, Municipio Ejemplo",
+    "services": ["baños", "estacionamiento", "área de fogatas", "renta de equipo"],
+    "schedule": "06:00 - 20:00",
+    "latitude": 19.432608,
+    "longitude": -99.133209,
+    "start_season": "2026-06-01",
+    "end_season": "2026-08-31",
+    "close_days": ["martes"],
+    "has_cabinets": true,
+    "capacity_cabinets": 10,
+    "capacity_camping": 40,
+    "created_at": "2026-07-18T10:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Parque Nacional Los Ciervos 2",
+    "location": "Aldea Ejemplo, Municipio Ejemplo",
+    "services": ["baños", "estacionamiento", "área de fogatas", "renta de equipo"],
+    "schedule": "08:00 - 22:00",
+    "latitude": 19.432608,
+    "longitude": -99.133209,
+    "start_season": "2026-06-01",
+    "end_season": "2026-08-31",
+    "close_days": ["martes"],
+    "has_cabinets": false,
+    "capacity_camping": 40,
+    "created_at": "2026-07-18T10:00:00.000Z"
+  }
+]
