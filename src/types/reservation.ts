@@ -1,3 +1,5 @@
+export type VisitType = 'cabin' | 'camping';
+
 export interface Reservation {
   id: number;
   userId: number;
@@ -5,9 +7,8 @@ export interface Reservation {
   startDate: Date;
   endDate: Date;
   numPeople: number;
-  visitType: string;
-  status: string;
+  visitType: VisitType;
+  status: 'Active' | 'Past';
   createdAt: Date;
 }
 
-export type ReserFilter = Partial<Reservation>;

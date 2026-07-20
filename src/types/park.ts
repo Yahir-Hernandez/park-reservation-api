@@ -15,7 +15,6 @@ export interface Park {
   created_at: string;
 }
 
-export type ParkFilter = Partial<Park>;
 
 
 

@@ -6,8 +6,32 @@
     "startDate": "2026-07-10",
     "endDate": "2026-07-12",
     "numPeople": 4,
-    "visitType": "cabaña",
-    "status": "activa",
+    "visitType": "cabin",
+    "cabinId": 1,
+    "status": "Active",
+    "createdAt": "2026-07-18T10:05:00.000Z"
+  },
+  {
+    "id": 2,
+    "userId": 2,
+    "parkId": 1,
+    "startDate": "2026-07-12",
+    "endDate": "2026-07-14",
+    "numPeople": 4,
+    "visitType": "camping",
+    "status": "Active",
+    "createdAt": "2026-07-18T10:05:00.000Z"
+  },
+  {
+    "id": 3,
+    "userId": 3,
+    "parkId": 1,
+    "startDate": "2026-07-14",
+    "endDate": "2026-07-16",
+    "numPeople": 4,
+    "visitType": "cabin",
+    "cabinId": 2,
+    "status": "Active",
     "createdAt": "2026-07-18T10:05:00.000Z"
   }
 ]
