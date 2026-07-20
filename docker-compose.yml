@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16 # usa la imagen oficial de Postgres versión 16
+    container_name: postgres_db 
+    restart: unless-stopped
+    environment: # configura usuario, contraseña y nombre de la base al primer arranque
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpasword1234
+      POSTGRES_DB: service_db
+    ports:
+      - "5432:5432" #expone el puerto de Postgres a tu máquina "host:internalContenedor"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck: # Docker verifica que Postgres ya esté listo para aceptar conexiones
+      test: ["CMD-SHELL", "pg_isready -U admin -d service_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

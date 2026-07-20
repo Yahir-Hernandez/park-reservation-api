@@ -4,3 +4,12 @@ dist/
 *.log
 .DS_Store
 doc/
+trash/
+
+src/generated/
+/src/generated/prisma
+
+.agents/
+.claude/
+.windsurf/
+skills-lock.json

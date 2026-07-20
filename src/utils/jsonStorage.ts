@@ -1,9 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { Park} from '../types/park';
-import { User } from '../types/user';
-import { Reservation } from '../types/reservation';
-import { Cabin } from '../types/cabin';
+import { Park} from '../types/backup/park';
+import { User } from '../types/backup/user';
+import { Reservation } from '../types/backup/reservation';
+import { Cabin } from '../types/backup/cabin';
 import {  Result } from '../types/errors';
 
 const filePathParks = path.join(__dirname, '../data/parks.json');

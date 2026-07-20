@@ -1,0 +1,128 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// =========================================================
+// Enums
+// =========================================================
+
+enum UserRole {
+  cliente
+  administrador
+
+  @@map("user_role")
+}
+
+enum VisitType {
+  cabaña
+  camping
+
+  @@map("visit_type")
+}
+
+enum ReservationStatus {
+  activa
+  cancelada
+
+  @@map("reservation_status")
+}
+
+// =========================================================
+// User
+// =========================================================
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(50)
+  lastname     String   @db.VarChar(50)
+  username     String   @unique @db.VarChar(20)
+  email        String   @unique @db.VarChar(100)
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(cliente)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  reservations Reservation[]
+
+  @@map("user")
+}
+
+// =========================================================
+// Park
+// =========================================================
+
+model Park {
+  id              Int      @id @default(autoincrement())
+  name            String   @db.VarChar(100)
+  location        String   @db.VarChar(255)
+  services        String[] @db.VarChar(50)
+  openingTime     DateTime @map("opening_time") @db.Time()
+  closingTime     DateTime @map("closing_time") @db.Time()
+  latitude        Decimal
+  longitude       Decimal
+  startSeason     DateTime @map("start_season") @db.Date
+  endSeason       DateTime @map("end_season") @db.Date
+  closeDays       String[] @map("close_days") @db.VarChar(15)
+  hasCabins       Boolean  @default(false) @map("has_cabins")
+  capacityCamping Int      @default(0) @map("capacity_camping")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  cabins       Cabin[]
+  reservations Reservation[]
+
+  @@map("park")
+}
+
+// =========================================================
+// Cabin
+// =========================================================
+
+model Cabin {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  parkId    Int      @map("park_id")
+  capacity  Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  park         Park          @relation(fields: [parkId], references: [id])
+  reservations Reservation[]
+
+  @@map("cabin")
+}
+
+// =========================================================
+// Reservation
+// =========================================================
+
+model Reservation {
+  id        Int                @id @default(autoincrement())
+  userId    String             @map("user_id") @db.Uuid
+  parkId    Int                @map("park_id")
+  cabinId   Int?               @map("cabin_id")
+  startDate DateTime           @map("start_date") @db.Date
+  endDate   DateTime           @map("end_date") @db.Date
+  people    Int                @db.SmallInt
+  visitType VisitType          @map("visit_type")
+  status    ReservationStatus  @default(activa)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user  User   @relation(fields: [userId], references: [id])
+  park  Park   @relation(fields: [parkId], references: [id])
+  cabin Cabin? @relation(fields: [cabinId], references: [id])
+
+  @@map("reservation")
+}
