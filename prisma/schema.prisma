@@ -97,7 +97,7 @@ model Cabin {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  park         Park          @relation(fields: [parkId], references: [id])
+  park         Park          @relation(fields: [parkId], references: [id], onDelete: Cascade)
   reservations Reservation[]
 
   @@map("cabin")

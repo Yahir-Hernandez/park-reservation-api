@@ -1,8 +1,9 @@
-import { CabinModel, Cabin } from "@/types/model";
+import { CabinModel, Cabin, BaseOmitKeys } from "@/types/model";
 import { prisma } from "@/db/config";
 import { createModel } from "./generic";
+import { Result } from "@/types/errors";
 
-export const cabinModel: CabinModel = createModel<
+export const baseModel: CabinModel = createModel<
   Cabin,
   number
 >(
@@ -11,11 +12,23 @@ export const cabinModel: CabinModel = createModel<
   'CABIN_NOT_FOUND'
 );
 
-/*
+
 export const cabinModel = Object.assign(
   baseModel, {
-    getByPark: async (id: number) => {
-      return await prisma.cabin.findMany({ where: { parkId: id} })
+  async createMany(cabins: Omit<Cabin, BaseOmitKeys>[]): Promise<Result<string>> {
+    try {
+      const result = await prisma.cabin.createMany({ data: cabins })
+      return { ok: true, data: `Se agregaron ${result.count}` };
+    } catch {
+      return {
+        ok: false ,
+        error: {
+          textCode: 'INTERNAL_ERROR',
+          message: 'Server internal error',
+          status: 500,
+        } 
+      };
     }
   }
-);*/
+}
+);
