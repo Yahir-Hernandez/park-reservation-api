@@ -1,5 +1,6 @@
-import { Result } from '../types/errors';
-import { Park, Cabin, Reservation, User } from "../generated/prisma/client";
+import { Result } from '@/types/errors';
+import { Park, Cabin, Reservation, User } from "@/generated/prisma/client";
+export { Park, Cabin, Reservation, User};
 
 // Tipamos de forma genérica qué campos se omiten por defecto al crear CUALQUIER modelo de tu DB
 export type BaseOmitKeys = 'id' | 'createdAt' | 'updatedAt';
@@ -44,3 +45,4 @@ export type CreateUserInput = Omit<User, BaseOmitKeys> & {
   role?: User['role']; // Opcional porque tiene @default(cliente)
 };
 export type UserModel = Model<User, string, CreateUserInput>;
+

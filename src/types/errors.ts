@@ -11,14 +11,14 @@ export type ErrorTextCode = 'USERNAME_ALREADY_EXISTS'
   | 'RESERVATION_FILTER_NOT_FOUND'
   | 'EMAIL_ALREADY_EXISTS'
   | 'END_SEASON_MUST_BE_AFTER_START_SEASON'
-  | 'CAPACITY_CAMPING_MUST_BE_POSITIVE'
+  | 'THE_CAMPING_CAPACITY_MUST_BE_GREATER_THAN_ZERO'
   | 'CAPACITY_CABINETS_MUST_BE_POSITIVE'
   | 'CABIN_NOT_FOUND';
 
 export interface ErrorService {
   textCode: ErrorTextCode;
   message: string;
-  status: 400 | 401 | 403 | 404 | 409 | 500;
+  status: 400 | 401 | 403 | 404 | 409 | 500 | 422;
 }
 
 export type Result<T> =

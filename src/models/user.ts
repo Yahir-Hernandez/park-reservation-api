@@ -1,6 +1,5 @@
-import { UserModel, CreateUserInput } from "../types/model";
-import { prisma } from "../db/config";
-import { User } from "../generated/prisma/client";
+import { UserModel, CreateUserInput, User} from "@/types/model";
+import { prisma } from "@/db/config";
 import { createModel } from "./generic";
 
 export const userModel: UserModel = createModel<

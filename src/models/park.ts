@@ -1,6 +1,5 @@
-import { ParkModel, CreateParkInput } from "../types/model";
-import { prisma } from "../db/config";
-import { Park } from "../generated/prisma/client";
+import { ParkModel, CreateParkInput, Park } from "@/types/model";
+import { prisma } from "@/db/config";
 import { createModel } from "./generic";
 
 export const parkModel: ParkModel = createModel<

@@ -1,8 +1,6 @@
-import { ReservationModel, CreateReservationInput } from "../types/model";
-import { prisma } from "../db/config";
-import { Reservation } from "../generated/prisma/client";
+import { ReservationModel, CreateReservationInput , Reservation} from "@/types/model";
+import { prisma } from "@/db/config";
 import { createModel } from "./generic";
-
 
 export const reservationModel: ReservationModel= createModel<
   Reservation, 

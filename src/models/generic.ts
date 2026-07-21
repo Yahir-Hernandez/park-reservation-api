@@ -1,5 +1,5 @@
-import { Result, ErrorService, ErrorTextCode } from "../types/errors";
-import { BaseOmitKeys } from "../types/model";
+import { Result, ErrorService, ErrorTextCode } from "@/types/errors";
+import { BaseOmitKeys } from "@/types/model";
 
 interface PrismaDelegate<T, ID, CreateInput = Omit<T, BaseOmitKeys>> {
   findMany(): Promise<T[]>;
