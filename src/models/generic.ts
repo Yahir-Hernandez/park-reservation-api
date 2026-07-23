@@ -16,12 +16,21 @@ export function createModel<T, ID, CreateInput = Omit<T, BaseOmitKeys>>(
 ) {
   const internalError = {
     ok: false as const,
-    error:  {
+    error: {
       textCode: 'INTERNAL_ERROR',
       message: 'Server internal error',
       status: 500,
     } as ErrorService
   };
+
+  const sanitizePayload = <P>(data: P): P => {
+    if (!data || typeof data !== 'object') return data;
+    const cleanData = { ...data } as Record<string, any>;
+    delete cleanData.id;
+    delete cleanData.createdAt;
+    delete cleanData.updatedAt;
+    return cleanData as P;
+  }
 
   return {
     async getAll(): Promise<Result<T[]>> {
@@ -54,7 +63,8 @@ export function createModel<T, ID, CreateInput = Omit<T, BaseOmitKeys>>(
 
     async create(data: CreateInput): Promise<Result<T>> {
       try {
-        const record = await delegate.create({ data });
+        const cleanData = sanitizePayload(data);
+        const record = await delegate.create({ data: cleanData });
         return { ok: true, data: record };
       } catch {
         return internalError;
@@ -63,7 +73,8 @@ export function createModel<T, ID, CreateInput = Omit<T, BaseOmitKeys>>(
 
     async update(id: ID, data: Partial<CreateInput>): Promise<Result<T>> {
       try {
-        const record = await delegate.update({ where: { id }, data });
+        const cleanData: Partial<CreateInput> = sanitizePayload(data);
+        const record = await delegate.update({ where: { id }, data: cleanData });
         return { ok: true, data: record };
       } catch {
         return internalError;

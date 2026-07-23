@@ -1,15 +1,28 @@
-import { Park, Cabin, Reservation, User } from '@/types/model';
+import { Park, Reservation, User } from '@/types/model';
 import { reservationModel } from '@/models/reservation';
 import { userModel } from '@/models/user';
 import { cabinModel } from '@/models/cabin';
 import { Result } from '@/types/errors';
-import { isAfter, isBefore } from 'date-fns';
+import {
+  isAfter,
+  isBefore,
+  eachDayOfInterval,
+  getDay
+} from 'date-fns';
 import { parkModel } from '@/models/park';
-import { error } from 'node:console';
-import { promises } from 'node:dns';
+
+const mapDays: Record<string, number> = {
+  'sunday': 0,
+  'monday': 1,
+  'tuesday': 2,
+  'wednesday': 3,
+  'thursday': 4,
+  'friday': 5,
+  'saturday': 6,
+}
 
 export class ReservationService {
-  static  isOnSeason(park: Park, reservation: Reservation): Result<Reservation> {
+  static isOnSeason(park: Park, reservation: Reservation): Result<Reservation> {
     if (ReservationService.validateDate(park, reservation)) return {
       ok: false,
       error: {
@@ -105,10 +118,14 @@ export class ReservationService {
       if (!resp1.ok) return resp1;
       if (!resp2.ok) return resp2;
       const park = resp1.data;
-      const resp3 = await ReservationService.validateVisitType(park,res);
-      if(!resp3.ok)return resp3;
-      const resp4 = ReservationService.isOnSeason(park, res);
-      if(!resp4.ok)return resp4;
+      const resp3 = ReservationService.isOnSeason(park, res);
+      if (!resp3.ok) return resp3;
+      const resp4 = await ReservationService.validateVisitType(park, res);
+      if (!resp4.ok) return resp4;
+      const resp5 = ReservationService.hasClosedDayInRange(res, park);
+      if (!resp5.ok) return resp5;
+      const resp6 = await ReservationService.overloap(res, park);
+      if (!resp6.ok) return resp6;
       return reservationModel.create(res);
     } catch {
       return {
@@ -120,6 +137,44 @@ export class ReservationService {
         }
       };
     }
+  }
+
+  // Validar que los dias sean en ingles en "park.closeDays"
+  static async overloap(res: Reservation, park: Park): Promise<Result<Reservation>> {
+    const resp = await reservationModel.findOverlappingCamping(
+      park,
+      res.startDate,
+      res.endDate
+    );
+    if (!resp.ok) return resp;
+    const reservs: Reservation[] = resp.data;
+    if (reservs.length === 0) return {ok: true, data: res};
+    let numberPeople: number = reservs.reduce((acc, r) => acc + r.people, 0);
+    numberPeople = numberPeople + res.people;
+    if (numberPeople > park.capacityCamping) return {
+      ok: false,
+      error: {
+        textCode: 'DATA_DOES_NOT_COMPLY_WITH_BUSINESS_RULES',
+        message: 'The camping capacity is not sufficient for the number of people in the reserve.',
+        status: 500,
+      }
+    };
+    return {ok: true, data: res};
+  }
+
+  static hasClosedDayInRange(res: Reservation, park: Park): Result<Reservation> {
+    const closeDays: number[] = park.closeDays.map(d => mapDays[d]!);
+    const reservedDays = eachDayOfInterval({ start: res.startDate, end: res.endDate });
+    const dayRange: Set<number> = new Set(reservedDays.map(day => getDay(day)));
+    if (closeDays.some(day => dayRange.has(day))) return {
+      ok: false,
+      error: {
+        textCode: 'DATA_DOES_NOT_COMPLY_WITH_BUSINESS_RULES',
+        message: 'The camping capacity is not sufficient for the number of people in the reserve.',
+        status: 500,
+      }
+    };
+    return {ok: true, data: res};
   }
 }
 
