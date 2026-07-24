@@ -1,5 +1,8 @@
 import express, { Application } from 'express';
 import cors from 'cors';
+import apiRoutes from '@/routes';
+import { notFoundHandler } from '@/middlewares/notFound.middleware';
+import { errorHandler } from '@/middlewares/errorHandler.middleware';
 
 const app: Application = express();
 
@@ -13,9 +16,13 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Rutas de la API (se irán agregando conforme crezca el proyecto)
-// app.use('/api/parks', parkRoutes);
-// app.use('/api/reservations', reservationRoutes);
-// app.use('/api/auth', authRoutes);
+// Rutas de la API
+app.use('/api', apiRoutes);
+
+// 404 para rutas no reconocidas
+app.use(notFoundHandler);
+
+// Manejador de errores de último recurso
+app.use(errorHandler);
 
 export default app;

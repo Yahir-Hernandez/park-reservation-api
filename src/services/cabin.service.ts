@@ -1,6 +1,7 @@
 import { Park, Cabin } from '@/types/model';
 import { parkModel } from '@/models/park';
 import { cabinModel } from "@/models/cabin";
+import { reservationModel } from '@/models/reservation';
 import { Result } from '@/types/errors';
 
 export class CabinServices {
@@ -52,6 +53,24 @@ export class CabinServices {
       return { ok: true, data: `One was added: ${cabin.name}` }
     }
     return  cabinModel.createMany(cabins)
+  }
+
+  // Agregado (no especificado explicitamente en el prompt, pero necesario
+  // para un endpoint DELETE /cabins/:id funcional): impide borrar una
+  // cabaña que ya tiene reservaciones asociadas, con el mismo criterio que
+  // `ParkService.deletePark` aplica para parques.
+  static async remove(cabin: Cabin): Promise<Result<Cabin>> {
+    const result = await reservationModel.findByCabin(cabin.id);
+    if (!result.ok) return result;
+    if (result.data.length > 0) return {
+      ok: false,
+      error: {
+        textCode: 'RESERVATION_ALREADY_EXISTS',
+        message: 'Cabins with existing reservations cannot be removed',
+        status: 422,
+      }
+    };
+    return cabinModel.delete(cabin.id);
   }
 
   private static validateName(cabins: Cabin[]): boolean {

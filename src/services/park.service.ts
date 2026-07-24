@@ -4,6 +4,20 @@ import { reservationModel } from '@/models/reservation';
 import { isAfter } from 'date-fns';
 import { Result } from '@/types/errors';
 
+export type EditableParkFields = {
+  location: string;
+  services: string[];
+  openingTime: Date;
+  closingTime: Date;
+  latitude: Park['latitude'];
+  longitude: Park['longitude'];
+  startSeason: Date;
+  endSeason: Date;
+  closeDays: string[];
+  hasCabins: boolean;
+  capacityCamping: number;
+};
+
 export class ParkService {
   static async createPark(park: Park): Promise<Result<Park>> {
     if (!isAfter(park.endSeason, park.startSeason)) return {
@@ -37,5 +51,69 @@ export class ParkService {
       }
     };
     return parkModel.delete(park.id);
+  }
+
+  /**
+   * Edita los campos editables de un parque.
+   *
+   * Reglas de negocio aplicadas:
+   * - El parque debe existir (404 si no).
+   * - Si se cambia `startSeason`/`endSeason` (o se conserva el valor actual
+   *   para el campo no enviado), `endSeason` debe seguir siendo posterior a
+   *   `startSeason` (mismo criterio que `createPark`).
+   * - Si se reduce `capacityCamping`, se valida que la nueva capacidad no sea
+   *   menor a la ocupacion ya comprometida por reservaciones activas de
+   *   camping. Enfoque elegido (declarado explicitamente, ver README/respuesta
+   *   final): se suma la cantidad de personas de todas las reservaciones
+   *   activas de camping cuyo rango de fechas no ha finalizado (desde "hoy"
+   *   hasta una fecha lejana). Es una cota conservadora: puede rechazar
+   *   reducciones que en la practica serian validas si esas reservaciones no
+   *   se traslapan entre si en el tiempo, pero nunca permite dejar
+   *   reservaciones activas por encima de la nueva capacidad.
+   */
+  static async editPark(parkId: number, changes: Partial<EditableParkFields>): Promise<Result<Park>> {
+    const current = await parkModel.getById(parkId);
+    if (!current.ok) return current;
+    const park = current.data;
+
+    const nextStartSeason = changes.startSeason ?? park.startSeason;
+    const nextEndSeason = changes.endSeason ?? park.endSeason;
+    if (!isAfter(nextEndSeason, nextStartSeason)) return {
+      ok: false,
+      error: {
+        textCode: 'DATA_DOES_NOT_COMPLY_WITH_BUSINESS_RULES',
+        message: `The dates for the ${park.name} park season are incorrect.`,
+        status: 422
+      }
+    };
+
+    if (changes.capacityCamping !== undefined) {
+      if (changes.capacityCamping <= 0) return {
+        ok: false,
+        error: {
+          textCode: 'DATA_DOES_NOT_COMPLY_WITH_BUSINESS_RULES',
+          message: `The park ${park.name} has camping capacity ${changes.capacityCamping} less than or equal to zero`,
+          status: 422
+        }
+      };
+
+      if (changes.capacityCamping < park.capacityCamping) {
+        const today = new Date();
+        const farFuture = new Date('9999-12-31');
+        const overlapping = await reservationModel.findOverlappingCamping(park, today, farFuture);
+        if (!overlapping.ok) return overlapping;
+        const committed = overlapping.data.reduce((acc, r) => acc + r.people, 0);
+        if (changes.capacityCamping < committed) return {
+          ok: false,
+          error: {
+            textCode: 'DATA_DOES_NOT_COMPLY_WITH_BUSINESS_RULES',
+            message: `Cannot reduce camping capacity to ${changes.capacityCamping}; there are already ${committed} people committed in active camping reservations.`,
+            status: 422,
+          }
+        };
+      }
+    }
+
+    return parkModel.update(parkId, changes);
   }
 }
