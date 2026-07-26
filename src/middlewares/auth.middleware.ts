@@ -2,20 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { verifyToken } from '@/utils/jwt';
 import { User } from '@/types/model';
 
-/**
- * PIEZA INFERIDA / DISEÑADA (no especificada en detalle por el dueño del
- * proyecto): middleware de autenticación basado en JWT (`jsonwebtoken`).
- *
- * - `authenticate`: exige un header `Authorization: Bearer <token>` válido.
- *   Si falta o el token es inválido/expirado -> 401 (no autenticado).
- * - `authorize(...roles)`: exige que el usuario autenticado tenga uno de los
- *   roles indicados. Si no -> 403 (autenticado pero sin permiso).
- *
- * Se reutiliza el textCode 'UNAUTHORIZED' ya existente en `ErrorTextCode`
- * tanto para 401 como para 403, distinguiendo el caso real mediante el
- * campo `status`, tal como indica la convención del proyecto de no agregar
- * nuevos textCode sin declararlo explícitamente.
- */
+
 export function authenticate(req: Request, res: Response, next: NextFunction): void {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {

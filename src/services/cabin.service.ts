@@ -6,7 +6,6 @@ import { Result } from '@/types/errors';
 
 export class CabinServices {
   static async add(park: Park, cabins: Cabin[]): Promise<Result<string>> {
-    //Verifica la existencia del Parque
     if (cabins.length <= 0) {
       return {
         ok: false,
@@ -55,10 +54,6 @@ export class CabinServices {
     return  cabinModel.createMany(cabins)
   }
 
-  // Agregado (no especificado explicitamente en el prompt, pero necesario
-  // para un endpoint DELETE /cabins/:id funcional): impide borrar una
-  // cabaña que ya tiene reservaciones asociadas, con el mismo criterio que
-  // `ParkService.deletePark` aplica para parques.
   static async remove(cabin: Cabin): Promise<Result<Cabin>> {
     const result = await reservationModel.findByCabin(cabin.id);
     if (!result.ok) return result;

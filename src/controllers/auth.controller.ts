@@ -20,11 +20,15 @@ export class AuthController {
     // endpoint (no especificada en el prompt; se documenta como decisión de
     // seguridad explícita).
     const userPayload = {
+      /*
       id: '',
       name: String(body.name),
       lastname: String(body.lastname),
       username: String(body.username),
-      email: String(body.email),
+      email: String(body.email),*/
+
+      // TODO: Estos se agregan manualmente despues de que zod verifique 
+      // y parsee los demas datos
       passwordHash: String(body.password),
       role: 'cliente',
       createdAt: new Date(),
