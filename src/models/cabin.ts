@@ -31,8 +31,6 @@ export const cabinModel = Object.assign(
     }
   },
 
-  // Agregado: necesario para listar las cabañas de un parque (endpoint
-  // GET /parks/:id/cabins), no existía un método filtrado por parque.
   async findByPark(parkId: number): Promise<Result<Cabin[]>> {
     try {
       const found = await prisma.cabin.findMany({ where: { parkId } });

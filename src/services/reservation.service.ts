@@ -11,8 +11,6 @@ import {
 } from 'date-fns';
 import { parkModel } from '@/models/park';
 
-// Se aceptan nombres de dia en ingles y en espanol, ya que los datos reales
-// (ver prisma/seed.ts) usan espanol y el codigo original solo soportaba ingles.
 const mapDays: Record<string, number> = {
   // Ingles
   'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
@@ -38,8 +36,6 @@ export class ReservationService {
     }
   }
 
-  // Renombrado desde "validateDate": el nombre original era confuso porque
-  // devolvia `true` cuando las fechas estaban FUERA de temporada.
   private static isOutOfSeason(park: Park, reservation: Reservation): boolean {
     const initDate = reservation.startDate;
     const endDate = reservation.endDate;
@@ -83,12 +79,6 @@ export class ReservationService {
     return { ok: true, data: reservation };
   }
 
-  // Simplificado: `parkModel.getById`/`userModel.getById` (modelo generico) ya
-  // devuelven un error 404 con el textCode correcto (PARK_NOT_FOUND /
-  // USER_NOT_FOUND) cuando el registro no existe, y jamas resuelven `ok: true`
-  // con `data` nulo. El chequeo `if (!park)`/`if (!user)` que existia antes era
-  // code muerto (inalcanzable) y además devolvia el status incorrecto (422 en
-  // vez de 404). Se elimina la duplicidad y se delega en el modelo genérico.
   static async validatePark(res: Reservation): Promise<Result<Park>> {
     return parkModel.getById(res.parkId);
   }
@@ -107,9 +97,6 @@ export class ReservationService {
       if (!userResult.ok) return userResult;
       const park = parkResult.data;
 
-      // Orden optimizado (fail-fast): primero las validaciones sincronas y sin
-      // acceso a base de datos (temporada, dias de cierre) y solo despues las
-      // que requieren I/O (validar cabaña/capacidad y traslapes).
       const seasonResult = ReservationService.isOnSeason(park, res);
       if (!seasonResult.ok) return seasonResult;
 
@@ -135,14 +122,6 @@ export class ReservationService {
     }
   }
 
-  /**
-   * Valida disponibilidad para la reserva:
-   * - camping: suma personas de reservas activas de camping que se traslapan
-   *   en fechas y compara contra la capacidad de camping del parque.
-   * - cabaña: una cabaña no admite traslape alguno (sin importar el numero de
-   *   personas), por lo que se rechaza si existe cualquier reserva activa que
-   *   se traslape con el rango de fechas solicitado.
-   */
   static async validateAvailability(res: Reservation, park: Park): Promise<Result<Reservation>> {
     if (res.visitType === 'cabaña') {
       const resp = await reservationModel.findOverlappingCabin(res.cabinId!, res.startDate, res.endDate);
@@ -173,13 +152,6 @@ export class ReservationService {
     return { ok: true, data: res };
   }
 
-  // Alias retenido para no romper referencias existentes al nombre anterior.
-  // Corrige el typo ("overloap" -> "overlap" via el nuevo nombre) y ahora
-  // distingue el tipo de visita en vez de asumir siempre camping.
-  static async overloap(res: Reservation, park: Park): Promise<Result<Reservation>> {
-    return ReservationService.validateAvailability(res, park);
-  }
-
   static hasClosedDayInRange(res: Reservation, park: Park): Result<Reservation> {
     const closeDays: number[] = park.closeDays
       .map(d => mapDays[d.toLowerCase()])
@@ -197,15 +169,6 @@ export class ReservationService {
     return { ok: true, data: res };
   }
 
-  /**
-   * Cancela una reservacion.
-   * - Un cliente solo puede cancelar sus propias reservaciones.
-   * - Un administrador puede cancelar cualquier reservacion.
-   * - Se permite cancelar reservaciones cuya fecha ya pasó (decision de
-   *   negocio confirmada, no se valida la fecha).
-   * - Cancelar una reservacion ya cancelada es rechazado explicitamente para
-   *   evitar operaciones redundantes silenciosas.
-   */
   static async cancel(
     reservationId: number,
     requestingUserId: string,

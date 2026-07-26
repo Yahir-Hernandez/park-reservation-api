@@ -52,25 +52,7 @@ export class ParkService {
     };
     return parkModel.delete(park.id);
   }
-
-  /**
-   * Edita los campos editables de un parque.
-   *
-   * Reglas de negocio aplicadas:
-   * - El parque debe existir (404 si no).
-   * - Si se cambia `startSeason`/`endSeason` (o se conserva el valor actual
-   *   para el campo no enviado), `endSeason` debe seguir siendo posterior a
-   *   `startSeason` (mismo criterio que `createPark`).
-   * - Si se reduce `capacityCamping`, se valida que la nueva capacidad no sea
-   *   menor a la ocupacion ya comprometida por reservaciones activas de
-   *   camping. Enfoque elegido (declarado explicitamente, ver README/respuesta
-   *   final): se suma la cantidad de personas de todas las reservaciones
-   *   activas de camping cuyo rango de fechas no ha finalizado (desde "hoy"
-   *   hasta una fecha lejana). Es una cota conservadora: puede rechazar
-   *   reducciones que en la practica serian validas si esas reservaciones no
-   *   se traslapan entre si en el tiempo, pero nunca permite dejar
-   *   reservaciones activas por encima de la nueva capacidad.
-   */
+  
   static async editPark(parkId: number, changes: Partial<EditableParkFields>): Promise<Result<Park>> {
     const current = await parkModel.getById(parkId);
     if (!current.ok) return current;

@@ -12,11 +12,6 @@ export type OmitKeys = 'passwordHash';
 
 export class UserServices {
 
-  /**
-   * Verifica que un campo unico (email o username) no este ya registrado.
-   * Unifica el patron duplicado que existia en `register` para email y
-   * username por separado.
-   */
   private static async ensureUnique(
     finder: () => Promise<Result<User | null>>,
     conflictCode: ErrorTextCode,
