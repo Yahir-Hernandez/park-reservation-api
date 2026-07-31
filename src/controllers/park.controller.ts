@@ -22,7 +22,7 @@ export class ParkController {
   }
 
   static async create(req: Request, res: Response): Promise<void> {
-    const body = (req.body ?? {}) as Record<string, unknown>;
+    /*const body = (req.body ?? {}) as Record<string, unknown>;
     const required = [
       'name', 'location', 'services', 'openingTime', 'closingTime',
       'latitude', 'longitude', 'startSeason', 'endSeason', 'closeDays', 'capacityCamping',
@@ -51,19 +51,21 @@ export class ParkController {
     if (!isNonEmptyString(body.name) || !isNonEmptyString(body.location)) {
       sendValidationError(res, '"name" and "location" must be non-empty strings.');
       return;
-    }
+    }*/
+
+    const body = req.body as Record<string, unknown>;
 
     const parkPayload = {
       id: 0,
       name: body.name,
       location: body.location,
       services: body.services,
-      openingTime,
-      closingTime,
+      openingTime: body.openingTime as unknown as Park['openingTime'],
+      closingTime: body.closingTime as unknown as Park['closingTime'],
       latitude: body.latitude as unknown as Park['latitude'],
       longitude: body.longitude as unknown as Park['longitude'],
-      startSeason,
-      endSeason,
+      startSeason: body.startSeason as unknown as Park['startSeason'],
+      endSeason: body.endSeason as unknown as Park['endSeason'],
       closeDays: body.closeDays,
       hasCabins: typeof body.hasCabins === 'boolean' ? body.hasCabins : false,
       capacityCamping: body.capacityCamping,
@@ -81,6 +83,7 @@ export class ParkController {
       sendValidationError(res, 'The park id must be an integer.');
       return;
     }
+    /*
     const body = (req.body ?? {}) as Record<string, unknown>;
     const changes: Partial<EditableParkFields> = {};
 
@@ -164,7 +167,9 @@ export class ParkController {
         return;
       }
       changes.capacityCamping = body.capacityCamping;
-    }
+    }*/
+
+    const changes = req.body as Partial<EditableParkFields>;
 
     const result = await ParkService.editPark(id, changes);
     sendResult(res, result);
